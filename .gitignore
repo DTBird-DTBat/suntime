@@ -5,3 +5,7 @@ dist/
 example.py
 suntime.egg-info/
 suntime/__pycache__/
+*.pyc
+.vscode/
+coverage_html/
+venv/

@@ -1,0 +1,60 @@
+.before_script_template:
+  image: registry.dtbird.com/verified/python:3.11-slim
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install flake8
+    - pip install -r requirements.txt
+
+stages:
+ - build
+ - lint
+ - test
+ - deploy
+
+install-venv-job:
+  extends: .before_script_template
+  stage: build
+  script:
+  - echo "venv installed"
+
+unit-test-job:
+  extends: .before_script_template
+  stage: test
+  script:
+  - venv/bin/python -m unittest discover --pattern=test_*.py -v
+
+lint-test-job:   # This job also runs in the test stage.
+  only: [main, develop]
+  extends: .before_script_template
+  stage: lint    # It can run at the same time as unit-test-job (in parallel).
+  script:
+    - flake8 suntime tests
+
+deploy-job:      # This job runs in the deploy stage.
+  # tags: [docker]
+  extends: .before_script_template
+  only: [main]
+  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+  environment: production
+  script:
+    - pip install build twine
+    - python -m build
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+pages:
+  extends: .before_script_template
+  stage: deploy
+  only: [main]
+  script:
+    - echo "pages job"
+    - sphinx-build -b html docs/ public/
+  artifacts:
+    paths:
+      - public
+

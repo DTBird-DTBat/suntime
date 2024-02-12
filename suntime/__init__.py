@@ -1,1 +1,1 @@
-from .suntime import Sun, SunTimeException
+from .suntime import Sun, SunTimeException, DegreesOffset  # noqa: F401
