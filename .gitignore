@@ -9,3 +9,4 @@ suntime/__pycache__/
 .vscode/
 coverage_html/
 venv/
+.pypirc
